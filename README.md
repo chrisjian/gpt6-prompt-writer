@@ -1,0 +1,109 @@
+# GPT‑6 提示词写作 Skill
+
+把模糊需求写成 GPT‑6 Astra 可以执行、检查和交付的提示词。
+
+A Chinese-first Codex skill for writing, refining, compressing, and diagnosing GPT‑6 Astra prompts, grounded in official OpenAI guidance.
+
+适合从零写提示词、修复 Agent 反复确认或过度测试、压缩旧提示词，以及设计 API 结构化输出。默认先给一个可复制版本，再按需要附变量和使用说明。
+
+## 先试一句
+
+安装后，在 Codex 中输入：
+
+```text
+$gpt6-prompt-writer 帮我写一个 GPT6 提示词：面向 AI 新手，解释“先写清楚交付物，再补背景”，用于 150–200 字的小红书短文。只给最终提示词。
+```
+
+Skill 会生成供目标模型使用的提示词。需要它执行提示词里的业务任务时，再明确提出执行要求。
+
+## 安装
+
+需要支持 Skills 的 Codex 环境。安装需联网；提示词写作本身不需要 API key 或第三方 Python 包。
+
+可直接告诉 Codex：
+
+```text
+$skill-installer 从 https://github.com/gnipbao/gpt6-prompt-writer 安装 gpt6-prompt-writer。分支为 codex/main，SKILL.md 位于仓库根目录。
+```
+
+也可以用 Codex 自带的安装脚本：
+
+```bash
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-installer/scripts/install-skill-from-github.py" \
+  --repo gnipbao/gpt6-prompt-writer \
+  --ref codex/main \
+  --path . \
+  --name gpt6-prompt-writer
+```
+
+默认安装到 `~/.codex/skills/gpt6-prompt-writer`，设置了 `CODEX_HOME` 时使用其 `skills` 子目录。已有同名目录时安装器会停止，避免覆盖。成功后在下一轮对话调用。
+
+安装器用法依据 Codex 随附的 `skill-installer`；不同宿主的技能发现方式可能不同。
+
+## 常见用法
+
+| 目标 | 调用示例 |
+| --- | --- |
+| 从零生成 | `$gpt6-prompt-writer 给我一个每周整理工作记录的 GPT6 周报模板，其他你决定。` |
+| 优化 Agent | `$gpt6-prompt-writer 优化这段 GPT6 编码提示词，让它在已授权范围内完成修复，减少无谓确认。下面是原文：……` |
+| 压缩 | `$gpt6-prompt-writer 压缩这段提示词，保留所有事实、权限、输出格式和失败处理约束：……` |
+| 只诊断 | `$gpt6-prompt-writer 只诊断以下 GPT6 提示词的冲突，不重写：……` |
+| API 提取 | `$gpt6-prompt-writer 为 GPT6 设计课程报名信息提取提示词和 Responses 请求，姓名和课程可能缺失，下游需要稳定解析。` |
+
+更多输入与成品见 [完整示例](examples/worked-examples.md)。
+
+## GPT‑6 适配重点
+
+依据 [官方 GPT‑6 Astra 指南](https://developers.openai.com/api/docs/guides/latest-model)，按任务需要加入这些控制：
+
+- **自主完成**：定义实际交付物、常规假设与真正需要澄清的条件。
+- **指令冲突**：区分用户目标、技能建议和平台系统/开发者约束。
+- **写作风格**：写清读者、篇幅与表达形式，控制过度格式化和套话。
+- **协作分工**：仅在宿主提供并允许子代理时，描述独立分工和整合责任。
+- **适量验证**：完成项目必需检查和相关行为验证，以新问题决定是否扩大测试。
+
+API 配置与自然语言提示词分开处理；模型与参数事实见 [API 契约](references/api-contract.md)。模板和选择规则属于本项目的实现，不代表 OpenAI 的统一规定。
+
+## 文件结构
+
+```text
+gpt6-prompt-writer/
+├── SKILL.md                       # 触发条件、工作流程与输出约定
+├── agents/openai.yaml             # Codex 显示名称与默认提示
+├── references/
+│   ├── gpt6-best-practices.md      # 官方依据及规则映射
+│   ├── prompt-patterns.md         # 按需选用的提示词模块
+│   └── api-contract.md            # API 角色、参数和 schema 边界
+├── examples/
+│   ├── worked-examples.md         # 完整写作示例
+│   ├── extraction-request.json    # 合法 JSON 请求体示例
+│   └── retest-prompts.json        # 14 个待执行回归场景
+├── scripts/validate.py            # 无第三方依赖的静态校验
+└── LICENSE
+```
+
+## 校验与证据范围
+
+在仓库根目录运行（Python 3.10+）：
+
+```bash
+python3 scripts/validate.py
+```
+
+脚本检查 Skill 元数据、必需文件、相对引用、JSON 语法、回归用例格式，以及示例请求的模型/字段/schema 约束。GitHub Actions 执行同一命令。它不联网、不调用模型，也不是完整 JSON Schema 验证器或安全扫描器。
+
+当前为初版试用：结构检查通过；六个场景做过同一上下文的人工推演（E2 / dry-run）；尚无独立模型回放、真实 API 兼容性实测或成功率数据。14 个回归场景是测试输入与通过条件，不能当作 14 次测试通过记录。
+
+修改提示词行为后，选择相关正常、缺信息、冲突输入做真实回放，记录版本、实际输出与失败条件。请勿将私密原始对话或凭据提交为测试材料。
+
+## 依据与维护
+
+官方资料核验日期为 **2026-09-07**，目标为 **GPT‑6 Astra / `gpt-6-astra`**。动态指南将来可能指向新模型；用户明确指定 GPT‑6 时应继续核对它的专属资料，不自动换代。
+
+出处与证据边界见 [来源记录](references/gpt6-best-practices.md)。离线时可使用注明日期的快照；要求“最新”或可运行 API 配置时应重新查阅官方资料。
+
+本项目为社区 Skill。执行外部操作、工具权限和模型调用均由使用它的宿主负责；文本提示词不会自行开启工具或获得新权限。
+
+## 许可证
+
+本仓库的原创指令、示例与脚本按 [MIT License](LICENSE) 开源。链接指向的外部文档保留其各自的权利和条款。

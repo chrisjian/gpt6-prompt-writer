@@ -1,0 +1,11 @@
+.DS_Store
+.dao/
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+outputs/
+*.log
