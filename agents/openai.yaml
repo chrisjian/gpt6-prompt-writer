@@ -2,3 +2,5 @@ interface:
   display_name: "GPT‑6 提示词写作"
   short_description: "依据 GPT‑6 官方指南生成、优化和诊断可直接使用的提示词"
   default_prompt: "使用 $gpt6-prompt-writer，把我的需求写成可直接用于 GPT‑6 Astra 的提示词。根据任务选择必要规则，避免无谓确认，并给出清楚的交付标准。"
+policy:
+  allow_implicit_invocation: false

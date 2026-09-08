@@ -57,12 +57,19 @@ def validate() -> int:
         key, sep, value = line.partition(":")
         require(bool(sep) and key not in fields, "Malformed or duplicate frontmatter field")
         fields[key] = value.strip()
-    require(set(fields) == {"name", "description"}, "Unexpected frontmatter fields")
+    require(set(fields) == {"name", "description", "disable-model-invocation"},
+            "Unexpected frontmatter fields")
     require(fields["name"] == "gpt6-prompt-writer", "Unexpected skill name")
+    require(fields["disable-model-invocation"] == "true",
+            "Claude Code skill must require explicit invocation")
     require(80 <= len(fields["description"]) <= 1024, "Description length outside expected range")
     require(len(body.splitlines()) <= 500, "Move details out of SKILL.md")
     for heading in ("## 工作流程", "## 边界", "## 质量标准"):
         require(heading in body, f"Missing section: {heading}")
+
+    openai_meta = (ROOT / "agents/openai.yaml").read_text(encoding="utf-8")
+    require("policy:\n  allow_implicit_invocation: false\n" in openai_meta,
+            "Codex skill must require explicit invocation")
 
     markdown = [ROOT / "README.md", ROOT / "SKILL.md"]
     markdown += sorted((ROOT / "references").glob("*.md"))
@@ -121,7 +128,7 @@ def validate() -> int:
         require(sample["missing_fields"] == missing, "Incorrect example missing_fields")
         require(sample["status"] == ("missing" if missing else "ok"), "Incorrect example status")
 
-    print(f"PASS: metadata, files, links, JSON, {len(cases)} regression inputs, and example request contracts.")
+    print(f"PASS: metadata, explicit-invocation policy, files, links, JSON, {len(cases)} regression inputs, and example request contracts.")
     print("Static checks only; no model/API execution or performance claim.")
     return 0
 

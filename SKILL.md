@@ -1,5 +1,6 @@
 ---
 name: gpt6-prompt-writer
+disable-model-invocation: true
 description: 为 GPT-6 Astra 编写、优化、压缩和诊断可直接使用的提示词，依据官方模型指南选择自主执行、指令冲突、写作风格、工具与验证规则。Use when the user asks for GPT6 提示词、GPT-6 prompt、Astra prompt、给 GPT6 写系统提示词、把旧提示词迁移到 GPT6，或希望修复 GPT6 反复确认、过度格式化、测试过多、任务未完成等提示词问题。适用于聊天提示词、可复用模板和 API/Agent 指令；不因普通业务任务或泛泛提及 GPT 而触发。
 ---
 
