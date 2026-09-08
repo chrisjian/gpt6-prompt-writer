@@ -4,7 +4,7 @@
 
 A Chinese-first Codex skill for writing, refining, compressing, and diagnosing GPT‑6 Astra prompts, grounded in official OpenAI guidance.
 
-适合从零写提示词、修复 Agent 反复确认或过度测试、压缩旧提示词，以及设计 API 结构化输出。默认先给一个可复制版本，再按需要附变量和使用说明。
+适合从零写提示词、审计和精简旧提示词、把模糊质量要求转成可验收标准、修复 Agent 反复确认或过度测试，以及设计 API 结构化输出。默认先给一个可复制版本，再按需要附变量和使用说明。
 
 ## 先试一句
 
@@ -56,11 +56,14 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-installer/scripts/inst
 
 依据 [官方 GPT‑6 Astra 指南](https://developers.openai.com/api/docs/guides/latest-model)，按任务需要加入这些控制：
 
+- **可验收结果**：把“专业、深入、高质量”等抽象要求转成可观察的产物特征和完成标准。
+- **Prompt 审计**：删除语义重复、无目的流程、旧模型 workaround 与无可观察效果的强化词。
 - **自主完成**：定义实际交付物、常规假设与真正需要澄清的条件。
 - **指令冲突**：区分用户目标、技能建议和平台系统/开发者约束。
-- **写作风格**：写清读者、篇幅与表达形式，控制过度格式化和套话。
+- **写作风格**：写清读者、篇幅与表达形式，把“专业/去 AI 味”等模糊风格词转成具体写作行为。
 - **协作分工**：仅在宿主提供并允许子代理时，描述独立分工和整合责任。
 - **适量验证**：完成项目必需检查和相关行为验证，以新问题决定是否扩大测试。
+- **行为保真压缩**：优先减少 instruction surface area，保留目标、权限、事实边界、格式和失败处理等不变量。
 
 API 配置与自然语言提示词分开处理；模型与参数事实见 [API 契约](references/api-contract.md)。模板和选择规则属于本项目的实现，不代表 OpenAI 的统一规定。
 
@@ -77,7 +80,7 @@ gpt6-prompt-writer/
 ├── examples/
 │   ├── worked-examples.md         # 完整写作示例
 │   ├── extraction-request.json    # 合法 JSON 请求体示例
-│   └── retest-prompts.json        # 14 个待执行回归场景
+│   └── retest-prompts.json        # 18 个待执行回归场景
 ├── scripts/validate.py            # 无第三方依赖的静态校验
 └── LICENSE
 ```
@@ -92,7 +95,7 @@ python3 scripts/validate.py
 
 脚本检查 Skill 元数据、必需文件、相对引用、JSON 语法、回归用例格式，以及示例请求的模型/字段/schema 约束。GitHub Actions 执行同一命令。它不联网、不调用模型，也不是完整 JSON Schema 验证器或安全扫描器。
 
-当前为初版试用：结构检查通过；六个场景做过同一上下文的人工推演（E2 / dry-run）；尚无独立模型回放、真实 API 兼容性实测或成功率数据。14 个回归场景是测试输入与通过条件，不能当作 14 次测试通过记录。
+当前为初版试用：结构检查通过；六个场景做过同一上下文的人工推演（E2 / dry-run）；尚无独立模型回放、真实 API 兼容性实测或成功率数据。18 个回归场景是测试输入与通过条件，不能当作 18 次测试通过记录。
 
 修改提示词行为后，选择相关正常、缺信息、冲突输入做真实回放，记录版本、实际输出与失败条件。请勿将私密原始对话或凭据提交为测试材料。
 
