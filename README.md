@@ -1,6 +1,6 @@
 # 多模型提示词工程 Skill
 
-面向日常工作与 coding-agent 场景，把模糊需求写成不同模型可以执行、检查和交付的高质量 Prompt。仓库名与 Skill 名均为 `multi-model-prompt-writer`。
+面向日常工作与 coding-agent 场景，把模糊需求写成不同模型可以执行、检查和交付的高质量 Prompt。仓库名与 Skill 名均为 `prompt-writer`。
 
 核心分层：
 
@@ -50,17 +50,17 @@ Skill 默认不自动进入上下文：
 示例：
 
 ```text
-$multi-model-prompt-writer 把这段 coding prompt 优化给 GPT-6 Astra 用：……
+$prompt-writer 把这段 coding prompt 优化给 GPT-6 Astra 用：……
 ```
 
 ```text
-$multi-model-prompt-writer 把 Gemini 2.5 的旧 prompt 迁到 Gemini 3：……
+$prompt-writer 把 Gemini 2.5 的旧 prompt 迁到 Gemini 3：……
 ```
 
 只有明确的程序化接入任务才进入 API 层：
 
 ```text
-$multi-model-prompt-writer 给 DeepSeek V4 Pro 写 thinking + tools 的 API 接入要求，并把 API state 和模型可见 Prompt 分开。
+$prompt-writer 给 DeepSeek V4 Pro 写 thinking + tools 的 API 接入要求，并把 API state 和模型可见 Prompt 分开。
 ```
 
 ## 核心能力
@@ -123,10 +123,10 @@ python3 scripts/validate.py
 
 ```bash
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-installer/scripts/install-skill-from-github.py" \
-  --repo chrisjian/multi-model-prompt-writer \
+  --repo chrisjian/prompt-writer \
   --ref prompt-quality-v1.1 \
   --path . \
-  --name multi-model-prompt-writer
+  --name prompt-writer
 ```
 
-安装后显式使用 `$multi-model-prompt-writer`。
+安装后显式使用 `$prompt-writer`。
