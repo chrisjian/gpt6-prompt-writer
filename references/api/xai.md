@@ -2,8 +2,6 @@
 
 Status: official-source verified 2026-09-09
 
-**Cold-load rule:** only load for xAI API/SDK configuration, model IDs, reasoning controls, search/tool setup, caching, compaction or protocol questions. Ordinary Grok prompt work should use the Grok model Profile only.
-
 ## Official sources
 
 - https://docs.x.ai/developers/grok-4-6
@@ -31,4 +29,4 @@ Grok does not obtain realtime/current-event information merely because a prompt 
 
 ## Prompt boundary
 
-Search availability, reasoning level, cache keys and compaction are API/harness configuration. The model Profile may state the behavioral consequence—such as requiring an actually enabled search tool for current facts—but should not carry these field names or protocol details.
+Search availability, reasoning level, cache keys and compaction are API/harness configuration. Grok 4.6 otherwise uses the model-neutral Core unless a future prompt-specific delta justifies a Profile.
