@@ -1,6 +1,6 @@
 interface:
   display_name: "多模型提示词工程"
   short_description: "为 GPT、Claude、Gemini、Grok、DeepSeek、GLM、Doubao 等模型生成、审计和适配高质量提示词"
-  default_prompt: "使用 $multi-model-prompt-writer，把我的需求写成适配目标模型的高质量提示词。先应用通用 Prompt Engineering Core，再只加入有官方依据或实测依据的模型家族/版本特有规则。"
+  default_prompt: "使用 $prompt-writer，把我的需求写成适配目标模型的高质量提示词。先应用通用 Prompt Engineering Core，再只加入有官方依据或实测依据的模型家族/版本特有规则。"
 policy:
   allow_implicit_invocation: false
