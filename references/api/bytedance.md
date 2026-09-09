@@ -2,8 +2,6 @@
 
 Status: official-source verified 2026-09-09
 
-**Cold-load rule:** only load for ByteDance/Doubao API or Coding Plan setup, model names, endpoints, thinking/reasoning parameters, multimodal/tool capability or migration. Ordinary Doubao prompt work should use the thin model Profile without this file.
-
 ByteDance Seed 是模型侧品牌/组织；当前主要开发者 serving/API 平台是 Volcengine / Ark（火山引擎/火山方舟）。目录按厂商统一使用 `bytedance`，但实际接入参数仍以 Volcengine/Ark 当前文档为准。
 
 ## Official sources
@@ -30,4 +28,4 @@ The Code variant is positioned for coding/IDE/Skills workflows, but this does no
 
 ## Prompt boundary
 
-Variant positioning can influence model selection, but endpoint/model-name details, thinking controls and tool availability belong here. Do not repeat “deep thinking” phrases in the Prompt as a substitute for actual configuration.
+Doubao Seed 2.x uses the model-neutral Core for natural-language Prompt design. Endpoint/model-name details, thinking controls and tool availability belong here; prompt wording does not substitute for actual configuration.
