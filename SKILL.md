@@ -1,24 +1,27 @@
 ---
 name: multi-model-prompt-writer
 disable-model-invocation: true
-description: 为 GPT-6 Astra、Claude Fable 5/5.1、Grok 4.6 等前沿模型编写、审计、压缩和适配高质量提示词。先应用跨模型 Prompt Engineering Core，再按目标模型加载官方依据支持的模型特有规则；适合从零写 prompt、优化旧 prompt、迁移模型、诊断冲突、控制风格/验证/工具行为和设计结构化输出。仅在用户显式调用本技能时使用。
+description: 为 GPT-6 Astra、GPT-5.6、Claude Fable 5/5.1、Gemini 3.x、Grok 4.6、DeepSeek V4、GLM 5.x、Doubao Seed 2.x 等前沿模型编写、审计、压缩和适配高质量提示词。先应用跨模型 Prompt Engineering Core，再按目标模型家族加载官方依据支持的 Profile 与版本差异；适合从零写 prompt、优化旧 prompt、迁移模型、诊断冲突、控制风格/验证/工具行为和设计结构化输出。仅在用户显式调用本技能时使用。
 ---
 
 # 多模型提示词工程
 
 把用户想得到的结果写成目标模型可以执行、检查和交付的提示词。默认中文，先给可复制版本，再给必要说明。除非用户另行要求，本技能只编写或审计提示词，不执行提示词描述的业务任务。
 
-本技能采用四层结构：**通用 Core → 目标模型 Profile → 宿主/API 约束 → 回归评测**。任何模型特有 workaround 都不能反向污染通用 Core。
+本技能采用四层结构：**通用 Core → 目标模型 Family/Profile → 宿主/API 约束 → 回归评测**。任何模型特有 workaround 都不能反向污染通用 Core。
 
 ## 资源导航
 
 - 通用原则：`references/core/prompt-principles.md`。
 - 可复用模块：`references/core/prompt-patterns.md`，只加载当前任务需要的模块。
-- GPT‑6 Astra：`references/models/gpt-6-astra.md`。
-- Claude Fable 5：`references/models/claude-fable-5.md`。
-- Claude Fable 5.1：`references/models/claude-fable-5.1.md`。
-- Grok 4.6：`references/models/grok-4.6.md`。
-- 回归用例：`evals/core.json` 与 `evals/models/*.json`。它们是待执行用例，不是通过记录。
+- OpenAI：`references/models/openai/gpt-6-astra.md`、`references/models/openai/gpt-5.6.md`。
+- Anthropic：`references/models/anthropic/claude-fable-5.md`、`references/models/anthropic/claude-fable-5.1.md`。
+- Google：`references/models/google/gemini-3.x.md`。
+- xAI：`references/models/xai/grok-4.6.md`。
+- DeepSeek：`references/models/deepseek/deepseek-v4.md`。
+- 智谱：`references/models/zhipu/glm-5.x.md`。
+- 火山引擎/豆包：`references/models/volcengine/doubao-seed-2.x.md`。
+- 回归用例：`evals/core.json` 与 `evals/models/**/*.json`。它们是待执行用例，不是通过记录。
 - 完整写作示例：`examples/worked-examples.md`。GPT‑6 Structured Outputs 请求示例仍见 `examples/extraction-request.json`。
 
 ## 核心原则
@@ -47,8 +50,14 @@ description: 为 GPT-6 Astra、Claude Fable 5/5.1、Grok 4.6 等前沿模型编�
 识别目标模型：
 
 - 用户明确指定模型时，保留该模型，不擅自换代。
-- `GPT6` / `GPT-6` / `Astra` 默认映射到当前 Profile 的 GPT‑6 Astra；真正 API ID 仍由 Profile 核验。
-- `Fable 5`、`Fable 5.1`、`Grok 4.6` 加载对应 Profile。
+- `GPT6` / `GPT-6` / `Astra` 加载 GPT‑6 Astra Profile。
+- `GPT-5.6` / `Sol` / `Terra` / `Luna` 加载 GPT‑5.6 family Profile，再按 variant 选择能力/成本定位；不要为 Sol/Luna 复制整份提示规则。
+- `Fable 5`、`Fable 5.1` 加载对应 Anthropic Profile。
+- `Gemini 3`、`Gemini 3.x` 及明确的 Gemini 3 系列型号加载 Gemini 3.x family Profile。
+- `Grok 4.6` 加载对应 xAI Profile。
+- `DeepSeek V4`、V4 Pro / Flash 加载 DeepSeek V4 family Profile。
+- `GLM 5`、`GLM 5.1`、`GLM 5.2` 等加载 GLM 5.x family Profile，并按版本能力收窄参数。
+- `Doubao Seed 2.x` / `Doubao-Seed-2.x` 的 Pro、Lite、Mini、Code 加载 Doubao Seed 2.x family Profile；当前为薄 Profile，不臆造未有官方依据的文风倾向。
 - 用户未指定模型时，先用 model-neutral Core；只有模型差异会实质改变结果时才需要补问目标模型。
 - 没有对应已核验 Profile 时，不猜模型特性；使用 Core 并把模型特有部分标为待核验。
 
@@ -87,11 +96,16 @@ description: 为 GPT-6 Astra、Claude Fable 5/5.1、Grok 4.6 等前沿模型编�
 
 ### 5. 加载目标模型 Profile
 
-只有目标模型明确且 Profile 已核验时，才加入模型特有适配：
+只有目标模型明确且 Profile 已核验时，才加入模型特有适配。优先加载一个 family Profile，再按型号/版本应用最小 variant 差异，避免每个 SKU 复制一套规则。
 
-- GPT‑6 Astra：关注 initiative、Skill/AGENTS 敏感度、格式倾向、验证倾向，以及 OpenAI API 迁移规则。
-- Claude Fable 5 / 5.1：关注各版本官方记录的 effort、长任务、范围、写作/格式、搜索与历史管理差异。
-- Grok 4.6：只使用 xAI 官方可核实的模型/API/搜索/缓存/compaction 事实；目前没有同等级通用文本 Prompting Guide 时，不臆造文风或默认行为倾向。
+- GPT‑6 Astra：initiative、Skill/AGENTS 敏感度、格式/验证倾向及 OpenAI API 迁移规则。
+- GPT‑5.6：以 family 共性为主；Sol/Terra/Luna 主要按能力、吞吐与成本定位选择，不默认存在完全不同的 Prompt 写法。
+- Claude Fable 5 / 5.1：按各版本官方记录的 effort、长任务、范围、写作/格式、搜索与历史管理差异。
+- Gemini 3.x：使用官方 Gemini 3 prompting/runtime 指引，尤其是简化旧式推理提示、thinking level、默认 temperature 与长上下文结构。
+- Grok 4.6：只使用 xAI 官方可核实的模型/API/搜索/缓存/compaction 事实；无证据时不臆造文风或 Agent 倾向。
+- DeepSeek V4：thinking 默认行为、effort 映射、thinking 模式采样参数、tool-call reasoning state 与 Pro/Flash variant。
+- GLM 5.x：按版本区分 context、thinking、reasoning_effort 与 interleaved thinking；不要把 GLM‑5.2 参数反向套给早期版本。
+- Doubao Seed 2.x：先处理 Pro/Lite/Mini/Code 定位、thinking/runtime 与 Coding Plan/API 差异；缺少文本 Prompting Guide 的行为倾向保持未定义。
 
 模型 Profile 的“Do not generalize”条款优先用于阻止把特例传播到 Core 或其他模型。
 
@@ -137,4 +151,4 @@ API 任务将稳定指令、用户输入与配置清楚分开。引用放在提�
 
 最终提示词应让接收者能回答：做什么、为什么（若相关）、依据什么、什么不能猜、交付什么、何时算完成，以及哪些行为是目标模型/宿主特有的。
 
-必须同时满足：任务未偏移；通用规则与模型特例分层；抽象质量词已具体化；约束可核验；无语义重复或冲突硬规则；无无目的流程；权限和材料边界清楚；复杂度与任务相称；模型/API 细节有官方依据或明确标为待核验；压缩未丢失行为不变量；未运行的验证如实标明。
+必须同时满足：任务未偏移；通用规则与模型特例分层；抽象质量词已具体化；约束可核验；无语义重复或冲突硬规则；无无目的流程；权限和材料边界清楚；复杂度与任务相称；模型/API 细节有官方依据或明确标为待核验；family variant 不重复复制整套规则；压缩未丢失行为不变量；未运行的验证如实标明。

@@ -1,0 +1,27 @@
+{
+  "schema_version": 2,
+  "model_family": "glm-5.x",
+  "cases": [
+    {
+      "id": "GLM5-01",
+      "category": "version-scoping",
+      "prompt": "给 GLM-5 写 API prompt，按 GLM-5.2 的 1M context 和 reasoning_effort=max 配置。",
+      "must": ["识别 GLM-5 与 GLM-5.2 能力不能混写", "不把 5.2-only reasoning_effort 套给 GLM-5", "按具体版本核验 context"],
+      "must_not": ["声称整个 5.x 都是 1M context", "伪装 GLM-5 支持 5.2-only 参数"]
+    },
+    {
+      "id": "GLM5-02",
+      "category": "interleaved-thinking",
+      "prompt": "GLM-5.2 做多轮工具调用，帮我写运行要求。",
+      "must": ["保留 interleaved reasoning state 的 runtime 要求", "与模型可见 prompt 分开", "保留工具结果与 reasoning content 的拼接边界"],
+      "must_not": ["要求用户看到完整私密思维链", "把该机制写成通用 API 规则"]
+    },
+    {
+      "id": "GLM5-03",
+      "category": "prompt-guide-boundary",
+      "prompt": "智谱旧提示词教程建议展示每一步思维链，帮我写 GLM-5.2 prompt。",
+      "must": ["保留清晰具体、参考资料、必要 few-shot 等可泛化建议", "拒绝把私密思维链披露作为提质要求", "优先使用模型 thinking/runtime"],
+      "must_not": ["照抄展示全部推理过程", "因为官方旧教程出现过就当成当前硬规则"]
+    }
+  ]
+}

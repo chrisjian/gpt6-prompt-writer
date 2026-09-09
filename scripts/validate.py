@@ -8,31 +8,43 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+MODEL_PROFILES = (
+    "references/models/openai/gpt-6-astra.md",
+    "references/models/openai/gpt-5.6.md",
+    "references/models/anthropic/claude-fable-5.md",
+    "references/models/anthropic/claude-fable-5.1.md",
+    "references/models/google/gemini-3.x.md",
+    "references/models/xai/grok-4.6.md",
+    "references/models/deepseek/deepseek-v4.md",
+    "references/models/zhipu/glm-5.x.md",
+    "references/models/volcengine/doubao-seed-2.x.md",
+)
+MODEL_EVALS = (
+    "evals/models/openai/gpt-6-astra.json",
+    "evals/models/openai/gpt-5.6.json",
+    "evals/models/anthropic/claude-fable-5.json",
+    "evals/models/anthropic/claude-fable-5.1.json",
+    "evals/models/google/gemini-3.x.json",
+    "evals/models/xai/grok-4.6.json",
+    "evals/models/deepseek/deepseek-v4.json",
+    "evals/models/zhipu/glm-5.x.json",
+    "evals/models/volcengine/doubao-seed-2.x.json",
+)
 REQUIRED_FILES = (
-    "SKILL.md",
-    "README.md",
-    "agents/openai.yaml",
-    "references/core/prompt-principles.md",
-    "references/core/prompt-patterns.md",
+    "SKILL.md", "README.md", "agents/openai.yaml",
+    "references/core/prompt-principles.md", "references/core/prompt-patterns.md",
+    "evals/core.json", "examples/worked-examples.md", "examples/extraction-request.json",
+    *MODEL_PROFILES, *MODEL_EVALS,
+)
+LEGACY_FLAT_PATHS = (
     "references/models/gpt-6-astra.md",
     "references/models/claude-fable-5.md",
     "references/models/claude-fable-5.1.md",
     "references/models/grok-4.6.md",
-    "evals/core.json",
     "evals/models/gpt-6-astra.json",
     "evals/models/claude-fable-5.json",
     "evals/models/claude-fable-5.1.json",
     "evals/models/grok-4.6.json",
-    "examples/worked-examples.md",
-    "examples/extraction-request.json",
-)
-LEGACY_PATHS = (
-    "references/gpt6-best-practices.md",
-    "references/prompt-patterns.md",
-    "references/cross-model-notes.md",
-    "references/api-contract.md",
-    "examples/retest-prompts.json",
-    "examples/retest-cross-model-prompts.json",
 )
 
 
@@ -80,8 +92,8 @@ def check_strict_objects(node) -> None:
 def validate() -> int:
     for rel in REQUIRED_FILES:
         require((ROOT / rel).is_file(), f"Missing file: {rel}")
-    for rel in LEGACY_PATHS:
-        require(not (ROOT / rel).exists(), f"Legacy architecture file still present: {rel}")
+    for rel in LEGACY_FLAT_PATHS:
+        require(not (ROOT / rel).exists(), f"Legacy flat model path still present: {rel}")
 
     skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
     match = re.match(r"\A---\n(.*?)\n---\n(.*)\Z", skill, re.S)
@@ -104,18 +116,8 @@ def validate() -> int:
     require("allow_implicit_invocation: false" in openai_meta, "OpenAI-style explicit invocation must remain enabled")
     require("$multi-model-prompt-writer" in openai_meta, "OpenAI default prompt uses old skill name")
 
-    refs = [
-        "references/core/prompt-principles.md",
-        "references/core/prompt-patterns.md",
-        "references/models/gpt-6-astra.md",
-        "references/models/claude-fable-5.md",
-        "references/models/claude-fable-5.1.md",
-        "references/models/grok-4.6.md",
-    ]
-    for rel in refs:
+    for rel in MODEL_PROFILES:
         require(f"`{rel}`" in body, f"Reference missing from SKILL resource guide: {rel}")
-
-    for rel in refs[2:]:
         text = (ROOT / rel).read_text(encoding="utf-8")
         require("## Official sources" in text, f"Model profile lacks official sources: {rel}")
         require("## Do not generalize" in text, f"Model profile lacks Do not generalize: {rel}")
@@ -134,13 +136,8 @@ def validate() -> int:
 
     seen_ids: set[str] = set()
     count = check_eval(ROOT / "evals/core.json", seen_ids)
-    for path in sorted((ROOT / "evals/models").glob("*.json")):
-        count += check_eval(path, seen_ids)
-
-    grok = read_json(ROOT / "evals/models/grok-4.6.json")
-    require(grok.get("model") == "grok-4.6", "Grok eval model id drift")
-    gpt = read_json(ROOT / "evals/models/gpt-6-astra.json")
-    require(gpt.get("model") == "gpt-6-astra", "GPT-6 eval model id drift")
+    for rel in MODEL_EVALS:
+        count += check_eval(ROOT / rel, seen_ids)
 
     request = read_json(ROOT / "examples/extraction-request.json")
     require(request.get("model") == "gpt-6-astra", "GPT-6 extraction example model drift")
@@ -151,10 +148,9 @@ def validate() -> int:
 
     primary = "\n".join((ROOT / p).read_text(encoding="utf-8") for p in ("SKILL.md", "README.md", "agents/openai.yaml"))
     require("gpt6-prompt-writer" not in primary, "Old repository/skill name remains in primary docs")
-    readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    require("--repo chrisjian/multi-model-prompt-writer" in readme, "README installer repo drift")
+    require("--repo chrisjian/multi-model-prompt-writer" in primary, "README installer repo drift")
 
-    print(f"PASS: multi-model architecture, explicit invocation, 4 model profiles, {count} eval cases, current repository name, and GPT-6 API example contracts.")
+    print(f"PASS: multi-model architecture, explicit invocation, {len(MODEL_PROFILES)} model/family profiles, {count} eval cases, vendor paths, and GPT-6 API example contracts.")
     print("Static checks only; no model/API execution or performance claim.")
     return 0
 

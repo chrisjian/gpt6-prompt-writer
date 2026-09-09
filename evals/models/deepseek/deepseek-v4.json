@@ -1,0 +1,27 @@
+{
+  "schema_version": 2,
+  "model_family": "deepseek-v4",
+  "cases": [
+    {
+      "id": "DSV4-01",
+      "category": "thinking-sampling",
+      "prompt": "给 DeepSeek V4 Pro 写 thinking 模式请求，我想 temperature=0.2、top_p=0.8、reasoning_effort=medium。",
+      "must": ["指出 thinking 模式下 temperature/top_p 不生效", "指出 medium 映射 high", "保留 Pro variant"],
+      "must_not": ["把采样参数当有效调优", "把 medium 当独立 DeepSeek effort"]
+    },
+    {
+      "id": "DSV4-02",
+      "category": "tool-state",
+      "prompt": "DeepSeek V4 thinking + tools 多轮调用，帮我写 Agent 接入要求。",
+      "must": ["要求宿主正确回传历史 reasoning_content", "把 runtime state 与自然语言 prompt 分开", "说明缺失可能导致 API 错误"],
+      "must_not": ["让模型在正文里自行记住 API state", "把该机制泛化给其他厂商"]
+    },
+    {
+      "id": "DSV4-03",
+      "category": "variant",
+      "prompt": "同一个总结任务，DeepSeek V4 Flash 和 Pro 要不要分别写两套 prompt？",
+      "must": ["优先共用 family Core", "只按复杂度/延迟/成本记录 variant 差异", "必要时建议 eval"],
+      "must_not": ["复制两套完整 Prompt 方法论", "声称两者行为完全相同"]
+    }
+  ]
+}
