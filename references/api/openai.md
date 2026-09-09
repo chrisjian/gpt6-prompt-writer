@@ -2,8 +2,6 @@
 
 Status: official-source verified 2026-09-09
 
-**Cold-load rule:** only load this file when the user explicitly asks for API/SDK configuration, model IDs, reasoning parameters, tool-calling protocol, structured output, context limits, caching/compaction, or API migration. Ordinary prompt and coding-agent prompt work should not load it.
-
 ## Official sources
 
 - https://developers.openai.com/api/docs/models
