@@ -1,48 +1,62 @@
 # 多模型提示词工程 Skill
 
-把模糊需求写成不同前沿模型都能执行、检查和交付的高质量提示词，并把**通用 Prompt Engineering Core**与**模型家族 Profile**分开维护。
+面向日常工作与 coding-agent 场景，把模糊需求写成不同前沿模型可以执行、检查和交付的高质量 Prompt。仓库名与 Skill 名均为 `multi-model-prompt-writer`。
 
-仓库名与 Skill 名统一为 `multi-model-prompt-writer`。
+核心设计是把三类知识严格分开：
 
-## 当前 Profile
+```text
+Core    = 跨模型 Prompt Engineering 方法
+Models  = 会直接改变自然语言 Prompt 写法的模型行为
+API     = 程序化参数、协议、状态与接入细节（默认冷加载）
+```
+
+Harness（Codex、Claude Code、Cursor、Grok Build 等）的 rules / skills / subagents / hooks / permissions 等机制现阶段不建立长期 Profile；只有任务确实依赖这些机制时才实时核验当前官方行为。
+
+## 当前 Model Profiles
 
 | 厂商 | Profile | 粒度 |
 | --- | --- | --- |
 | OpenAI | GPT‑6 Astra | model |
-| OpenAI | GPT‑5.6 | family：Sol / Terra / Luna variants |
+| OpenAI | GPT‑5.6 | family：Sol / Terra / Luna |
 | Anthropic | Claude Fable 5 | model |
 | Anthropic | Claude Fable 5.1 | model |
 | Google | Gemini 3.x | family |
 | xAI | Grok 4.6 | model |
-| DeepSeek | DeepSeek V4 | family：Pro / Flash variants |
-| 智谱 | GLM 5.x | family：5 / 5.1 / 5.2 versions |
+| DeepSeek | DeepSeek V4 | family：Pro / Flash |
+| 智谱 | GLM 5.x | family |
 | 火山引擎 | Doubao Seed 2.x | thin family：Pro / Lite / Mini / Code |
 
-Profile 不是“支持列表越长越好”。只有模型家族存在足以改变 Prompt 或 runtime 设计的差异时才建立；variant 优先写成 family 内差异，不复制整套方法论。
+Profile 不是支持列表越长越好。只有某个模型/家族存在足以改变 Prompt 设计的差异时才建立；API 参数差异不构成独立 Prompt 方法论。
 
-## 架构
+## 默认加载策略
+
+普通 Prompt、coding-agent Prompt、研究/写作 Prompt、Prompt 审计与压缩：
 
 ```text
-Universal Prompt Engineering Core
-            │
-            ├── OpenAI
-            │   ├── GPT-6 Astra
-            │   └── GPT-5.6 → Sol / Terra / Luna
-            ├── Anthropic
-            │   ├── Claude Fable 5
-            │   └── Claude Fable 5.1
-            ├── Google → Gemini 3.x
-            ├── xAI → Grok 4.6
-            ├── DeepSeek → V4 Pro / Flash
-            ├── Zhipu → GLM 5.x
-            └── Volcengine → Doubao Seed 2.x
+Universal Core
+      +
+Target Model Profile（若模型明确）
+      ↓
+Final Prompt
 ```
 
-Core 只放跨模型成立的工程原则；默认 effort、格式倾向、搜索行为、reasoning state、API 字段和 migration workaround 必须下沉到对应 Profile。
+只有用户明确要求以下内容时才加载 `references/api/`：
+
+- API / SDK / request body
+- model ID / endpoint
+- reasoning / effort / thinking 参数
+- context / max output
+- Structured Outputs / JSON 配置
+- tool-calling protocol
+- conversation / reasoning state
+- cache / compaction
+- 程序化接口迁移
+
+即使用户说“给 GPT‑6 / DeepSeek / Gemini 写 coding prompt”，也**不会仅因为模型明确就加载 API reference**。
 
 ## 显式调用
 
-这个 Skill 体量较大，默认**不自动进入上下文**：
+Skill 体量较大，默认不自动进入上下文：
 
 - Claude Code 风格：`disable-model-invocation: true`
 - OpenAI/Codex 风格：`policy.allow_implicit_invocation: false`
@@ -50,15 +64,17 @@ Core 只放跨模型成立的工程原则；默认 effort、格式倾向、搜�
 示例：
 
 ```text
-$multi-model-prompt-writer 把这段旧 prompt 优化给 Gemini 3 用，删掉旧式 step-by-step forcing：……
+$multi-model-prompt-writer 把这段 coding prompt 优化给 GPT-6 Astra 用，减少无意义确认和过度测试：……
 ```
 
 ```text
-$multi-model-prompt-writer 给 DeepSeek V4 Pro 写一个 thinking + tools Agent prompt，并把 runtime 接入要求和模型可见提示词分开。
+$multi-model-prompt-writer 把 Gemini 2.5 的旧 prompt 迁到 Gemini 3，删除不再必要的 step-by-step forcing：……
 ```
 
+只有明确 API 请求才进入冷资料层：
+
 ```text
-$multi-model-prompt-writer 给 GPT-5.6 Luna 写批量摘要 prompt，保持事实边界，不因为成本优先而降低验收标准。
+$multi-model-prompt-writer 给 DeepSeek V4 Pro 写 thinking + tools 的 API 接入要求，并把 API state 和模型可见 Prompt 分开。
 ```
 
 ## 核心能力
@@ -67,12 +83,10 @@ $multi-model-prompt-writer 给 GPT-5.6 Luna 写批量摘要 prompt，保持事�
 - **可观察验收**：把“专业、深入、高质量”转成可检查结果。
 - **根因级指令**：一个高层行为原则优先于一串症状级禁令。
 - **Prompt Audit**：删除重复、冲突、模糊强化、旧模型 workaround 和无目的流程。
-- **行为保真压缩**：减少 instruction surface area，但保留事实、权限、格式和失败分支等不变量。
-- **意图边界**：区分 analysis / advice / action。
-- **状态真实性**：计划、推断和意图不能冒充已搜索、已验证、已完成；证据默认按需披露。
-- **可读性简洁**：通过删除低价值信息变短，不靠电报体、箭头链和术语堆积。
-- **代表性正例**：微妙行为在规则仍不稳定时，用一个短正例替代继续堆禁令。
-- **模型适配层**：只加入对应厂商官方文档或可复现实测支持的特例。
+- **行为保真压缩**：减少 instruction surface area，同时保留事实、权限、格式和失败分支等不变量。
+- **状态真实性**：计划、推断和意图不能冒充已搜索、已验证、已完成。
+- **模型适配**：只加入有官方依据或可复现实测支持、且确实改变 Prompt 写法的特例。
+- **API 冷加载**：参数/协议不再污染普通 Model Profile 和日常 Prompt 上下文。
 
 ## 文件结构
 
@@ -84,90 +98,71 @@ $multi-model-prompt-writer 给 GPT-5.6 Luna 写批量摘要 prompt，保持事�
 │   ├── core/
 │   │   ├── prompt-principles.md
 │   │   └── prompt-patterns.md
-│   └── models/
-│       ├── openai/
-│       │   ├── gpt-6-astra.md
-│       │   └── gpt-5.6.md
-│       ├── anthropic/
-│       │   ├── claude-fable-5.md
-│       │   └── claude-fable-5.1.md
-│       ├── google/gemini-3.x.md
-│       ├── xai/grok-4.6.md
-│       ├── deepseek/deepseek-v4.md
-│       ├── zhipu/glm-5.x.md
-│       └── volcengine/doubao-seed-2.x.md
+│   ├── models/
+│   │   ├── openai/
+│   │   ├── anthropic/
+│   │   ├── google/
+│   │   ├── xai/
+│   │   ├── deepseek/
+│   │   ├── zhipu/
+│   │   └── volcengine/
+│   └── api/
+│       ├── openai.md
+│       ├── anthropic.md
+│       ├── google.md
+│       ├── xai.md
+│       ├── deepseek.md
+│       ├── zhipu.md
+│       └── volcengine.md
 ├── evals/
 │   ├── core.json
-│   └── models/<vendor>/*.json
+│   ├── models/<vendor>/*.json
+│   └── api/*.json
 ├── examples/
 │   ├── worked-examples.md
-│   └── extraction-request.json
+│   └── api/openai-extraction-request.json
 └── scripts/validate.py
 ```
 
-## 使用逻辑
+## 分层判断规则
 
-```text
-用户需求 / 旧 Prompt
-        ↓
-识别目标模型或 family（若有）
-        ↓
-Universal Core
-        ↓
-Family / Model Profile
-        ↓
-Variant notes（仅必要差异）
-        ↓
-宿主 / API 真实能力核验
-        ↓
-最终 Prompt
-        ↓
-Core + Profile Evals
-```
+### 放进 Model Profile
 
-如果用户没指定模型，默认只使用 Core。只有模型差异会实质改变结果时，才需要知道目标模型；不要为了形式完整强制先问模型。
+如果删除这条信息，会让最终生成的**自然语言 Prompt**明显变差或写错，例如：
 
-## Profile 设计规则
+- GPT‑6 Astra 容易过度验证或过度格式化；
+- Fable 5.1 low effort 下当前事实任务可能需要更明确的搜索触发；
+- Gemini 3 迁移时应删除旧式 CoT forcing，并注意长上下文任务布局；
+- 某模型/版本存在稳定的 scope、editing、delegation 等 Prompt 行为差异。
 
-每份 Profile 至少包含：
+### 放进 API Reference
 
-- Official sources
-- Verified model behaviors / facts
-- Prompt adaptations
-- API / runtime notes
-- Variant / migration notes（若相关）
-- **Do not generalize**
+如果它主要决定“调用模型的代码怎么写”，例如：
 
-最后一项用于防止某个模型的 workaround 再次污染 Core。
+- model ID / alias
+- effort / thinking / sampling 参数
+- context / max output
+- Responses / Chat 等接口
+- `reasoning_content` / thought signatures
+- Structured Outputs / JSON Output
+- cache / compaction
+- conversation state / tool-loop protocol
 
-### GPT‑5.6
-
-Sol / Terra / Luna 共用 family Profile。当前官方差异主要是能力、吞吐和成本定位；没有足够依据时不为三个 SKU 复制不同的 Prompt 方法论。
-
-### Gemini 3.x
-
-依据 Google 官方 Gemini 3 指南维护 `thinking_level`、默认 temperature、thought signatures、旧式 CoT forcing 迁移和长上下文提示结构。
-
-### DeepSeek V4
-
-依据官方 V4 thinking/API 文档维护默认 thinking、effort 映射、thinking 模式 sampling 参数失效，以及 tools 场景 `reasoning_content` state。
-
-### GLM 5.x
-
-按版本区分 context、thinking、`reasoning_effort` 和 interleaved thinking。GLM‑5.2 的 1M context 与 reasoning 参数不能反向套给 GLM‑5。
-
-### Doubao Seed 2.x
-
-当前保持 thin Profile：记录 Pro/Lite/Mini/Code 定位、thinking/runtime 与 Coding Plan/在线推理边界；没有高质量官方文本 Prompting Guide 时不臆造 Markdown、verbosity、testing 等行为倾向。
+灰区采用“机制与结论分离”：API 文件保存机制，Model Profile 只保留它对 Prompt 的必要行为结论。
 
 ## Evals
 
-回归测试分两层：
+回归测试现在分三层：
 
-- `evals/core.json`：跨模型原则。
-- `evals/models/<vendor>/*.json`：模型/family 特有行为与 API 适配。
+- `evals/core.json`：跨模型 Prompt 原则；
+- `evals/models/<vendor>/*.json`：Prompt-relevant 模型行为；
+- `evals/api/*.json`：冷加载的 API/协议规则。
 
-这些文件是**测试输入与判定标准**，不是模型实际通过记录。真实回放应记录模型版本、日期、effort/reasoning、Skill commit、输入、输出和判定结果。
+本次拆分不增加测试数量：**总计仍为 45 个待执行 case**，只是把原来混在 Model eval 里的 API case 移到了 API eval。它们是测试输入与判定标准，不是模型真实通过记录。
+
+## 示例
+
+[worked-examples.md](examples/worked-examples.md) 默认只展示 Prompt 路径。API 示例单独位于 `examples/api/`，不会作为普通 Prompt 的默认材料。
 
 ## 静态校验
 
@@ -175,7 +170,7 @@ Sol / Terra / Luna 共用 family Profile。当前官方差异主要是能力、�
 python3 scripts/validate.py
 ```
 
-静态检查包括 Skill metadata、显式调用策略、厂商目录、Profile 结构、Markdown 相对引用、JSON eval 格式、case ID 唯一性，以及 GPT‑6 示例请求契约。它不调用模型，不代表 Prompt 效果已经验证。
+静态检查包括：Skill metadata、显式调用策略、Core/Model/API 分层、Model Profile 的 API boundary、API cold-load 声明、Markdown 相对链接、JSON eval 格式、case ID 唯一性和 API 示例契约。它不调用真实模型，因此不代表 Prompt 效果已经通过 replay eval。
 
 ## 安装当前开发分支
 
@@ -189,18 +184,8 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-installer/scripts/inst
 
 安装后显式使用 `$multi-model-prompt-writer`。
 
-## 依据与维护
+## 维护原则
 
-当前模型资料核验日期：**2026-09-09**。
+当前资料核验日期：**2026-09-09**。要求“最新/官方”或可运行 API 配置时，应重新打开对应厂商官方资料，而不是把仓库快照当永久事实。
 
-主要官方入口：
-
-- OpenAI: https://developers.openai.com/api/docs/models
-- Anthropic: https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices
-- Google Gemini 3: https://ai.google.dev/gemini-api/docs/gemini-3
-- xAI Grok 4.6: https://docs.x.ai/developers/grok-4-6
-- DeepSeek V4: https://api-docs.deepseek.com/guides/thinking_mode/
-- GLM: https://docs.bigmodel.cn/cn/guide/models/text/glm-5.2
-- Doubao/Volcengine: https://developer.volcengine.com/articles/7610285824933445675
-
-要求“最新/官方”或可运行 API 配置时，应重新打开对应厂商文档，而不是把仓库快照当永久事实。
+当前优先级是 Prompt 质量与真实 replay eval，而不是提前维护高变化率的 harness 配置百科。

@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+
 MODEL_PROFILES = (
     "references/models/openai/gpt-6-astra.md",
     "references/models/openai/gpt-5.6.md",
@@ -18,6 +19,15 @@ MODEL_PROFILES = (
     "references/models/deepseek/deepseek-v4.md",
     "references/models/zhipu/glm-5.x.md",
     "references/models/volcengine/doubao-seed-2.x.md",
+)
+API_REFS = (
+    "references/api/openai.md",
+    "references/api/anthropic.md",
+    "references/api/google.md",
+    "references/api/xai.md",
+    "references/api/deepseek.md",
+    "references/api/zhipu.md",
+    "references/api/volcengine.md",
 )
 MODEL_EVALS = (
     "evals/models/openai/gpt-6-astra.json",
@@ -30,13 +40,27 @@ MODEL_EVALS = (
     "evals/models/zhipu/glm-5.x.json",
     "evals/models/volcengine/doubao-seed-2.x.json",
 )
+API_EVALS = (
+    "evals/api/openai.json",
+    "evals/api/anthropic.json",
+    "evals/api/google.json",
+    "evals/api/xai.json",
+    "evals/api/deepseek.json",
+    "evals/api/zhipu.json",
+    "evals/api/volcengine.json",
+)
 REQUIRED_FILES = (
     "SKILL.md", "README.md", "agents/openai.yaml",
     "references/core/prompt-principles.md", "references/core/prompt-patterns.md",
-    "evals/core.json", "examples/worked-examples.md", "examples/extraction-request.json",
-    *MODEL_PROFILES, *MODEL_EVALS,
+    "evals/core.json", "examples/worked-examples.md",
+    "examples/api/openai-extraction-request.json",
+    *MODEL_PROFILES, *API_REFS, *MODEL_EVALS, *API_EVALS,
 )
-LEGACY_FLAT_PATHS = (
+LEGACY_PATHS = (
+    "references/runtime",
+    "references/harness",
+    "references/hosts",
+    "examples/extraction-request.json",
     "references/models/gpt-6-astra.md",
     "references/models/claude-fable-5.md",
     "references/models/claude-fable-5.1.md",
@@ -57,9 +81,11 @@ def read_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def check_eval(path: Path, seen_ids: set[str]) -> int:
+def check_eval(path: Path, seen_ids: set[str], expected_scope: str | None = None) -> int:
     data = read_json(path)
     require(data.get("schema_version") == 2, f"Unexpected eval schema: {path}")
+    if expected_scope is not None:
+        require(data.get("scope") == expected_scope, f"Unexpected eval scope in {path}: {data.get('scope')}")
     cases = data.get("cases")
     require(isinstance(cases, list) and cases, f"No eval cases: {path}")
     for case in cases:
@@ -92,8 +118,8 @@ def check_strict_objects(node) -> None:
 def validate() -> int:
     for rel in REQUIRED_FILES:
         require((ROOT / rel).is_file(), f"Missing file: {rel}")
-    for rel in LEGACY_FLAT_PATHS:
-        require(not (ROOT / rel).exists(), f"Legacy flat model path still present: {rel}")
+    for rel in LEGACY_PATHS:
+        require(not (ROOT / rel).exists(), f"Legacy/deferred architecture path present: {rel}")
 
     skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
     match = re.match(r"\A---\n(.*?)\n---\n(.*)\Z", skill, re.S)
@@ -111,17 +137,30 @@ def validate() -> int:
     require(len(body.splitlines()) <= 500, "Move details out of SKILL.md")
     for heading in ("## 核心原则", "## 工作流程", "## 边界", "## 质量标准"):
         require(heading in body, f"Missing section: {heading}")
+    require("**API positive trigger**" in body and "**API negative trigger**" in body, "API cold-load routing is missing")
+    require("不维护固定 `references/harness/`" in body, "Harness defer policy is missing")
 
     openai_meta = (ROOT / "agents/openai.yaml").read_text(encoding="utf-8")
     require("allow_implicit_invocation: false" in openai_meta, "OpenAI-style explicit invocation must remain enabled")
     require("$multi-model-prompt-writer" in openai_meta, "OpenAI default prompt uses old skill name")
 
     for rel in MODEL_PROFILES:
-        require(f"`{rel}`" in body, f"Reference missing from SKILL resource guide: {rel}")
+        require(f"`{rel}`" in body, f"Model reference missing from SKILL resource guide: {rel}")
         text = (ROOT / rel).read_text(encoding="utf-8")
-        require("## Official sources" in text, f"Model profile lacks official sources: {rel}")
-        require("## Do not generalize" in text, f"Model profile lacks Do not generalize: {rel}")
         require("Status:" in text, f"Model profile lacks verification status: {rel}")
+        require("## Official sources" in text, f"Model profile lacks official sources: {rel}")
+        require("## API boundary" in text, f"Model profile lacks API boundary: {rel}")
+        require("## Do not generalize" in text, f"Model profile lacks Do not generalize: {rel}")
+        for old_heading in ("## API / runtime facts", "## API / runtime notes", "## Runtime notes"):
+            require(old_heading not in text, f"API/runtime detail leaked back into model profile: {rel}")
+
+    for rel in API_REFS:
+        require(f"`{rel}`" in body, f"API reference missing from SKILL cold-load guide: {rel}")
+        text = (ROOT / rel).read_text(encoding="utf-8")
+        require("Status:" in text, f"API reference lacks verification status: {rel}")
+        require("Cold-load rule:" in text, f"API reference lacks cold-load rule: {rel}")
+        require("## Official sources" in text, f"API reference lacks official sources: {rel}")
+        require("## Prompt boundary" in text, f"API reference lacks prompt boundary: {rel}")
 
     markdown = [ROOT / "README.md", ROOT / "SKILL.md", ROOT / "examples/worked-examples.md"]
     markdown += sorted((ROOT / "references").rglob("*.md"))
@@ -137,9 +176,12 @@ def validate() -> int:
     seen_ids: set[str] = set()
     count = check_eval(ROOT / "evals/core.json", seen_ids)
     for rel in MODEL_EVALS:
-        count += check_eval(ROOT / rel, seen_ids)
+        count += check_eval(ROOT / rel, seen_ids, "model-profile")
+    for rel in API_EVALS:
+        count += check_eval(ROOT / rel, seen_ids, "api-reference")
+    require(count == 45, f"Expected 45 preserved eval cases after split, found {count}")
 
-    request = read_json(ROOT / "examples/extraction-request.json")
+    request = read_json(ROOT / "examples/api/openai-extraction-request.json")
     require(request.get("model") == "gpt-6-astra", "GPT-6 extraction example model drift")
     require(request.get("reasoning", {}).get("effort") == "low", "GPT-6 extraction example baseline drift")
     fmt = request["text"]["format"]
@@ -150,8 +192,8 @@ def validate() -> int:
     require("gpt6-prompt-writer" not in primary, "Old repository/skill name remains in primary docs")
     require("--repo chrisjian/multi-model-prompt-writer" in primary, "README installer repo drift")
 
-    print(f"PASS: multi-model architecture, explicit invocation, {len(MODEL_PROFILES)} model/family profiles, {count} eval cases, vendor paths, and GPT-6 API example contracts.")
-    print("Static checks only; no model/API execution or performance claim.")
+    print(f"PASS: Core/Model/API separation, explicit invocation, {len(MODEL_PROFILES)} model profiles, {len(API_REFS)} cold API refs, and {count} preserved eval cases.")
+    print("Harness references remain intentionally deferred; static checks only, no model/API execution or performance claim.")
     return 0
 
 

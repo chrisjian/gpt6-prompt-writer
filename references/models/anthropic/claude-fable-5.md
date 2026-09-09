@@ -4,49 +4,39 @@ Status: verified against Anthropic official docs on 2026-09-09.
 
 ## Official sources
 
-- Prompting Claude Fable 5: https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5
-- Claude prompting best practices: https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices
+- https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5
+- https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices
 
-## Verified model behaviors
+## Prompt-relevant behaviors
 
-Anthropic documents these Fable 5 behaviors as particularly relevant to prompting and scaffolding:
-
-- Stronger instruction following means many behaviors can be steered with a brief instruction instead of enumerating every symptom.
-- Hard tasks can run substantially longer, especially at higher effort.
-- Higher effort can over-deliberate on routine tasks and can encourage unrequested cleanup or abstraction unless scope is explicit.
+- Stronger instruction following means one concise root-cause instruction can often replace many symptom-level prohibitions.
+- Hard tasks can run substantially longer; more deliberative configurations can encourage unrequested cleanup or abstraction unless scope is explicit.
 - Long autonomous runs benefit from grounding progress/completion claims in actual tool results.
-- The model can occasionally take unrequested actions when the user was only describing or assessing a problem; explicit scope boundaries help.
-- Anthropic recommends giving the reason behind a request when that context changes how the task should be approached.
-- Long-run final messages can become dense or rely on working shorthand; user-facing summaries should re-ground the reader and favor clarity over compression.
-- Skills and prompts designed for older models may be too prescriptive and should be re-evaluated instead of automatically preserved.
+- The model can occasionally act when the user was only assessing a problem; explicit analysis-vs-action boundaries help.
+- Purpose/audience context can materially improve prioritization when it changes how the task should be approached.
+- Long-run final messages can become dense or rely on internal shorthand; user-facing summaries should re-ground the reader.
+- Skills/prompts designed for older models may be too prescriptive and should be re-evaluated instead of automatically preserved.
 
 ## Prompt adaptations
 
 Use the Core first. Add Fable 5-specific guidance only when relevant:
 
-- Prefer one concise root-cause instruction over many symptom-level prohibitions.
-- For long autonomous tasks, require truthful status reporting tied to actual tool results, but do not force raw logs into the final answer.
-- When the user is asking for assessment rather than change, stop at the assessment; when change is explicitly requested, proceed within scope.
-- At higher effort, add explicit scope discipline if the task is vulnerable to cleanup, refactoring, defensive extras, or speculative abstractions.
-- For long user-facing summaries, request outcome-first complete sentences and drop internal shorthand.
-- Re-test old Skills/system prompts and remove legacy scaffolding that no longer improves eval results.
+- Prefer one concise root-cause instruction over many near-duplicate prohibitions.
+- For long autonomous tasks, require truthful status claims tied to actual results, without forcing raw logs into the final answer.
+- Separate assessment from state-changing action; explicit action requests proceed within scope.
+- When the task is vulnerable to cleanup/refactoring/defensive extras, make scope boundaries explicit.
+- For long user-facing summaries, request outcome-first complete sentences and remove working shorthand.
+- Re-test old Skills/system prompts and remove legacy scaffolding that no longer improves actual results.
 
-## Effort
+## API boundary
 
-Anthropic describes effort as the main intelligence/latency/cost control for Fable 5 and recommends `high` as a default starting point for most tasks, with `xhigh` for capability-sensitive work and `medium`/`low` for routine work. Treat this as Fable-specific configuration guidance and validate against real workloads.
-
-## Runtime notes
-
-Long-running behavior, memory systems, subagents, async communication, progress tools, and thinking visibility depend on the host/API. Prompt text alone does not create them.
-
-Anthropic also warns against asking the model to reproduce internal reasoning as response text; use supported thinking/progress mechanisms instead when the application needs visibility.
+Effort selection, thinking visibility, preserved thinking/history, compaction and other Anthropic integration mechanics live in [Anthropic API reference](../../api/anthropic.md). Ordinary Prompt work does not load that file.
 
 ## Do not generalize
 
 Do not automatically transfer these Fable 5 specifics to other models:
 
-- `high` as the default effort starting point,
-- Anthropic-specific long-run scaffolding,
-- Fable safety/refusal behavior,
-- fresh-context verifier or periodic self-verification recommendations,
-- Claude thinking blocks, memory conventions, or send-to-user tooling.
+- Fable-specific long-run/scope behavior,
+- Anthropic effort or thinking semantics,
+- fresh-context verifier or periodic self-verification patterns,
+- Claude memory/subagent/tooling conventions.
