@@ -2,8 +2,6 @@
 
 Status: official-source verified 2026-09-09
 
-**Cold-load rule:** only load for DeepSeek API/SDK requests, thinking configuration, sampling behavior, tool-loop state, JSON output, model IDs or protocol migration. Ordinary prompt work should use the DeepSeek V4 model Profile without this file.
-
 ## Official sources
 
 - https://api-docs.deepseek.com/guides/thinking_mode/
@@ -36,4 +34,4 @@ When migrating old `deepseek-chat` / `deepseek-reasoner` integrations, verify cu
 
 ## Prompt boundary
 
-Keep task instructions, scope and output behavior in the Prompt. Keep thinking switches, effort mapping, sampling no-ops, `reasoning_content`, endpoints and JSON/tool protocol here.
+Keep task instructions, scope and output behavior in Core. Keep thinking switches, effort mapping, sampling no-ops, `reasoning_content`, endpoints and JSON/tool protocol here.
