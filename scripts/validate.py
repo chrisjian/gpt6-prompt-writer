@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static checks for the multi-model prompt-writer package; no network/model execution."""
+"""Static checks for the prompt-writer package; no network/model execution."""
 from __future__ import annotations
 
 import json
@@ -102,14 +102,14 @@ def validate() -> int:
         require(bool(sep) and key not in fields, "Malformed or duplicate frontmatter field")
         fields[key] = value.strip()
     require(set(fields) == {"name", "description", "disable-model-invocation"}, "Unexpected frontmatter fields")
-    require(fields["name"] == "multi-model-prompt-writer", "Unexpected skill name")
+    require(fields["name"] == "prompt-writer", "Unexpected skill name")
     require(fields["disable-model-invocation"] == "true", "Claude-style explicit invocation must remain enabled")
     require(100 <= len(fields["description"]) <= 1024, "Description length outside expected range")
     require(len(body.splitlines()) <= 500, "Move details out of SKILL.md")
 
     openai_meta = (ROOT / "agents/openai.yaml").read_text(encoding="utf-8")
     require("allow_implicit_invocation: false" in openai_meta, "OpenAI-style explicit invocation must remain enabled")
-    require("$multi-model-prompt-writer" in openai_meta, "OpenAI default prompt uses old skill name")
+    require("$prompt-writer" in openai_meta, "OpenAI default prompt uses wrong skill name")
 
     for rel in MODEL_PROFILES:
         require(f"`{rel}`" in body, f"Model reference missing from SKILL resource guide: {rel}")
@@ -153,10 +153,12 @@ def validate() -> int:
     check_strict_objects(fmt["schema"])
 
     primary = "\n".join((ROOT / p).read_text(encoding="utf-8") for p in ("SKILL.md", "README.md", "agents/openai.yaml"))
-    require("gpt6-prompt-writer" not in primary, "Old repository/skill name remains in primary docs")
-    require("--repo chrisjian/multi-model-prompt-writer" in primary, "README installer repo drift")
+    for legacy_name in ("gpt6-prompt-writer", "multi-model-prompt-writer"):
+        require(legacy_name not in primary, f"Old repository/skill name remains in primary docs: {legacy_name}")
+    require("--repo chrisjian/prompt-writer" in primary, "README installer repo drift")
+    require("--name prompt-writer" in primary, "README installer skill name drift")
 
-    print(f"PASS: explicit invocation, {len(MODEL_PROFILES)} prompt-delta profiles, {len(API_REFS)} API refs, and {count} eval cases.")
+    print(f"PASS: prompt-writer explicit invocation, {len(MODEL_PROFILES)} prompt-delta profiles, {len(API_REFS)} API refs, and {count} eval cases.")
     print("Static checks only; no model/API execution or performance claim.")
     return 0
 
