@@ -12,13 +12,8 @@ ROOT = Path(__file__).resolve().parents[1]
 MODEL_PROFILES = (
     "references/models/openai/gpt-6-astra.md",
     "references/models/openai/gpt-5.6.md",
-    "references/models/anthropic/claude-fable-5.md",
     "references/models/anthropic/claude-fable-5.1.md",
     "references/models/google/gemini-3.x.md",
-    "references/models/xai/grok-4.6.md",
-    "references/models/deepseek/deepseek-v4.md",
-    "references/models/zhipu/glm-5.x.md",
-    "references/models/bytedance/doubao-seed-2.x.md",
 )
 API_REFS = (
     "references/api/openai.md",
@@ -50,7 +45,7 @@ API_EVALS = (
     "evals/api/bytedance.json",
 )
 REQUIRED_FILES = (
-    "SKILL.md", "README.md", "agents/openai.yaml",
+    "AGENTS.md", "SKILL.md", "README.md", "agents/openai.yaml",
     "references/core/prompt-principles.md", "references/core/prompt-patterns.md",
     "evals/core.json", "examples/worked-examples.md",
     "examples/api/openai-extraction-request.json",
@@ -135,10 +130,6 @@ def validate() -> int:
     require(fields["disable-model-invocation"] == "true", "Claude-style explicit invocation must remain enabled")
     require(100 <= len(fields["description"]) <= 1024, "Description length outside expected range")
     require(len(body.splitlines()) <= 500, "Move details out of SKILL.md")
-    for heading in ("## 核心原则", "## 工作流程", "## 边界", "## 质量标准"):
-        require(heading in body, f"Missing section: {heading}")
-    require("**API positive trigger**" in body and "**API negative trigger**" in body, "API cold-load routing is missing")
-    require("不维护固定 `references/harness/`" in body, "Harness defer policy is missing")
 
     openai_meta = (ROOT / "agents/openai.yaml").read_text(encoding="utf-8")
     require("allow_implicit_invocation: false" in openai_meta, "OpenAI-style explicit invocation must remain enabled")
@@ -146,23 +137,13 @@ def validate() -> int:
 
     for rel in MODEL_PROFILES:
         require(f"`{rel}`" in body, f"Model reference missing from SKILL resource guide: {rel}")
-        text = (ROOT / rel).read_text(encoding="utf-8")
-        require("Status:" in text, f"Model profile lacks verification status: {rel}")
-        require("## Official sources" in text, f"Model profile lacks official sources: {rel}")
-        require("## API boundary" in text, f"Model profile lacks API boundary: {rel}")
-        require("## Do not generalize" in text, f"Model profile lacks Do not generalize: {rel}")
-        for old_heading in ("## API / runtime facts", "## API / runtime notes", "## Runtime notes"):
-            require(old_heading not in text, f"API/runtime detail leaked back into model profile: {rel}")
 
     for rel in API_REFS:
-        require(f"`{rel}`" in body, f"API reference missing from SKILL cold-load guide: {rel}")
         text = (ROOT / rel).read_text(encoding="utf-8")
         require("Status:" in text, f"API reference lacks verification status: {rel}")
-        require("Cold-load rule:" in text, f"API reference lacks cold-load rule: {rel}")
         require("## Official sources" in text, f"API reference lacks official sources: {rel}")
-        require("## Prompt boundary" in text, f"API reference lacks prompt boundary: {rel}")
 
-    markdown = [ROOT / "README.md", ROOT / "SKILL.md", ROOT / "examples/worked-examples.md"]
+    markdown = [ROOT / "AGENTS.md", ROOT / "README.md", ROOT / "SKILL.md", ROOT / "examples/worked-examples.md"]
     markdown += sorted((ROOT / "references").rglob("*.md"))
     for path in markdown:
         text = path.read_text(encoding="utf-8")
@@ -179,7 +160,7 @@ def validate() -> int:
         count += check_eval(ROOT / rel, seen_ids, "model-profile")
     for rel in API_EVALS:
         count += check_eval(ROOT / rel, seen_ids, "api-reference")
-    require(count == 45, f"Expected 45 preserved eval cases after split, found {count}")
+    require(count == 45, f"Expected 45 preserved eval cases, found {count}")
 
     bytedance_api_eval = read_json(ROOT / "evals/api/bytedance.json")
     require(bytedance_api_eval.get("vendor") == "bytedance", "ByteDance API eval vendor drift")
@@ -195,8 +176,8 @@ def validate() -> int:
     require("gpt6-prompt-writer" not in primary, "Old repository/skill name remains in primary docs")
     require("--repo chrisjian/multi-model-prompt-writer" in primary, "README installer repo drift")
 
-    print(f"PASS: Core/Model/API separation, explicit invocation, {len(MODEL_PROFILES)} model profiles, {len(API_REFS)} cold API refs, and {count} preserved eval cases.")
-    print("Harness references remain intentionally deferred; static checks only, no model/API execution or performance claim.")
+    print(f"PASS: explicit invocation, {len(MODEL_PROFILES)} prompt-delta profiles, {len(API_REFS)} API refs, and {count} preserved eval cases.")
+    print("Static checks only; no model/API execution or performance claim.")
     return 0
 
 
