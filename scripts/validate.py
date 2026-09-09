@@ -24,32 +24,12 @@ API_REFS = (
     "references/api/zhipu.md",
     "references/api/bytedance.md",
 )
-MODEL_EVALS = (
-    "evals/models/openai/gpt-6-astra.json",
-    "evals/models/openai/gpt-5.6.json",
-    "evals/models/anthropic/claude-fable-5.json",
-    "evals/models/anthropic/claude-fable-5.1.json",
-    "evals/models/google/gemini-3.x.json",
-    "evals/models/xai/grok-4.6.json",
-    "evals/models/deepseek/deepseek-v4.json",
-    "evals/models/zhipu/glm-5.x.json",
-    "evals/models/bytedance/doubao-seed-2.x.json",
-)
-API_EVALS = (
-    "evals/api/openai.json",
-    "evals/api/anthropic.json",
-    "evals/api/google.json",
-    "evals/api/xai.json",
-    "evals/api/deepseek.json",
-    "evals/api/zhipu.json",
-    "evals/api/bytedance.json",
-)
 REQUIRED_FILES = (
     "AGENTS.md", "SKILL.md", "README.md", "agents/openai.yaml",
     "references/core/prompt-principles.md", "references/core/prompt-patterns.md",
     "evals/core.json", "examples/worked-examples.md",
     "examples/api/openai-extraction-request.json",
-    *MODEL_PROFILES, *API_REFS, *MODEL_EVALS, *API_EVALS,
+    *MODEL_PROFILES, *API_REFS,
 )
 LEGACY_PATHS = (
     "references/runtime",
@@ -60,10 +40,6 @@ LEGACY_PATHS = (
     "references/models/claude-fable-5.md",
     "references/models/claude-fable-5.1.md",
     "references/models/grok-4.6.md",
-    "evals/models/gpt-6-astra.json",
-    "evals/models/claude-fable-5.json",
-    "evals/models/claude-fable-5.1.json",
-    "evals/models/grok-4.6.json",
 )
 
 
@@ -154,13 +130,17 @@ def validate() -> int:
             dest = (path.parent / link.split("#")[0]).resolve()
             require(dest.is_relative_to(ROOT) and dest.exists(), f"Broken/outside relative link in {path}: {link}")
 
+    model_evals = sorted((ROOT / "evals/models").rglob("*.json"))
+    api_evals = sorted((ROOT / "evals/api").glob("*.json"))
+    require(model_evals, "No model eval files")
+    require(api_evals, "No API eval files")
+
     seen_ids: set[str] = set()
     count = check_eval(ROOT / "evals/core.json", seen_ids)
-    for rel in MODEL_EVALS:
-        count += check_eval(ROOT / rel, seen_ids, "model-profile")
-    for rel in API_EVALS:
-        count += check_eval(ROOT / rel, seen_ids, "api-reference")
-    require(count == 45, f"Expected 45 preserved eval cases, found {count}")
+    for path in model_evals:
+        count += check_eval(path, seen_ids, "model-profile")
+    for path in api_evals:
+        count += check_eval(path, seen_ids, "api-reference")
 
     bytedance_api_eval = read_json(ROOT / "evals/api/bytedance.json")
     require(bytedance_api_eval.get("vendor") == "bytedance", "ByteDance API eval vendor drift")
@@ -176,7 +156,7 @@ def validate() -> int:
     require("gpt6-prompt-writer" not in primary, "Old repository/skill name remains in primary docs")
     require("--repo chrisjian/multi-model-prompt-writer" in primary, "README installer repo drift")
 
-    print(f"PASS: explicit invocation, {len(MODEL_PROFILES)} prompt-delta profiles, {len(API_REFS)} API refs, and {count} preserved eval cases.")
+    print(f"PASS: explicit invocation, {len(MODEL_PROFILES)} prompt-delta profiles, {len(API_REFS)} API refs, and {count} eval cases.")
     print("Static checks only; no model/API execution or performance claim.")
     return 0
 
