@@ -39,7 +39,7 @@ Coding/IDE/Skills 场景优化；不代表所有 API 或 harness 具有相同工
 
 ## API boundary
 
-Coding Plan/在线推理接入、endpoint/model name、thinking/reasoning 配置、版本迁移和具体工具能力见 [Volcengine / Doubao API reference](../../api/volcengine.md)。普通 Prompt 任务不加载该文件。
+Coding Plan/在线推理接入、endpoint/model name、thinking/reasoning 配置、版本迁移和具体工具能力见 [ByteDance / Doubao API reference](../../api/bytedance.md)。普通 Prompt 任务不加载该文件。
 
 ## Do not generalize
 

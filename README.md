@@ -24,7 +24,7 @@ Harness（Codex、Claude Code、Cursor、Grok Build 等）的 rules / skills / s
 | xAI | Grok 4.6 | model |
 | DeepSeek | DeepSeek V4 | family：Pro / Flash |
 | 智谱 | GLM 5.x | family |
-| 火山引擎 | Doubao Seed 2.x | thin family：Pro / Lite / Mini / Code |
+| ByteDance | Doubao Seed 2.x | thin family：Pro / Lite / Mini / Code |
 
 Profile 不是支持列表越长越好。只有某个模型/家族存在足以改变 Prompt 设计的差异时才建立；API 参数差异不构成独立 Prompt 方法论。
 
@@ -105,7 +105,7 @@ $multi-model-prompt-writer 给 DeepSeek V4 Pro 写 thinking + tools 的 API 接�
 │   │   ├── xai/
 │   │   ├── deepseek/
 │   │   ├── zhipu/
-│   │   └── volcengine/
+│   │   └── bytedance/
 │   └── api/
 │       ├── openai.md
 │       ├── anthropic.md
@@ -113,7 +113,7 @@ $multi-model-prompt-writer 给 DeepSeek V4 Pro 写 thinking + tools 的 API 接�
 │       ├── xai.md
 │       ├── deepseek.md
 │       ├── zhipu.md
-│       └── volcengine.md
+│       └── bytedance.md
 ├── evals/
 │   ├── core.json
 │   ├── models/<vendor>/*.json

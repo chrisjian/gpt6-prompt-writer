@@ -22,7 +22,7 @@ description: 为 GPT-6 Astra、GPT-5.6、Claude Fable 5/5.1、Gemini 3.x、Grok 
 - xAI：`references/models/xai/grok-4.6.md`。
 - DeepSeek：`references/models/deepseek/deepseek-v4.md`。
 - 智谱：`references/models/zhipu/glm-5.x.md`。
-- 火山引擎/豆包：`references/models/volcengine/doubao-seed-2.x.md`。
+- ByteDance/Seed：`references/models/bytedance/doubao-seed-2.x.md`。
 
 ### API 冷资料层
 
@@ -34,7 +34,7 @@ description: 为 GPT-6 Astra、GPT-5.6、Claude Fable 5/5.1、Gemini 3.x、Grok 
 - `references/api/xai.md`
 - `references/api/deepseek.md`
 - `references/api/zhipu.md`
-- `references/api/volcengine.md`
+- `references/api/bytedance.md`
 
 普通 Prompt、coding-agent Prompt、写作模板、研究 Prompt 和旧 Prompt 优化默认**不加载 API reference**。
 

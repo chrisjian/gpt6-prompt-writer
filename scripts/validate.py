@@ -18,7 +18,7 @@ MODEL_PROFILES = (
     "references/models/xai/grok-4.6.md",
     "references/models/deepseek/deepseek-v4.md",
     "references/models/zhipu/glm-5.x.md",
-    "references/models/volcengine/doubao-seed-2.x.md",
+    "references/models/bytedance/doubao-seed-2.x.md",
 )
 API_REFS = (
     "references/api/openai.md",
@@ -27,7 +27,7 @@ API_REFS = (
     "references/api/xai.md",
     "references/api/deepseek.md",
     "references/api/zhipu.md",
-    "references/api/volcengine.md",
+    "references/api/bytedance.md",
 )
 MODEL_EVALS = (
     "evals/models/openai/gpt-6-astra.json",
@@ -38,7 +38,7 @@ MODEL_EVALS = (
     "evals/models/xai/grok-4.6.json",
     "evals/models/deepseek/deepseek-v4.json",
     "evals/models/zhipu/glm-5.x.json",
-    "evals/models/volcengine/doubao-seed-2.x.json",
+    "evals/models/bytedance/doubao-seed-2.x.json",
 )
 API_EVALS = (
     "evals/api/openai.json",
@@ -47,7 +47,7 @@ API_EVALS = (
     "evals/api/xai.json",
     "evals/api/deepseek.json",
     "evals/api/zhipu.json",
-    "evals/api/volcengine.json",
+    "evals/api/bytedance.json",
 )
 REQUIRED_FILES = (
     "SKILL.md", "README.md", "agents/openai.yaml",
@@ -69,6 +69,10 @@ LEGACY_PATHS = (
     "evals/models/claude-fable-5.json",
     "evals/models/claude-fable-5.1.json",
     "evals/models/grok-4.6.json",
+    "references/models/volcengine",
+    "references/api/volcengine.md",
+    "evals/models/volcengine",
+    "evals/api/volcengine.json",
 )
 
 
@@ -181,6 +185,9 @@ def validate() -> int:
         count += check_eval(ROOT / rel, seen_ids, "api-reference")
     require(count == 45, f"Expected 45 preserved eval cases after split, found {count}")
 
+    bytedance_api_eval = read_json(ROOT / "evals/api/bytedance.json")
+    require(bytedance_api_eval.get("vendor") == "bytedance", "ByteDance API eval vendor drift")
+
     request = read_json(ROOT / "examples/api/openai-extraction-request.json")
     require(request.get("model") == "gpt-6-astra", "GPT-6 extraction example model drift")
     require(request.get("reasoning", {}).get("effort") == "low", "GPT-6 extraction example baseline drift")
@@ -191,6 +198,7 @@ def validate() -> int:
     primary = "\n".join((ROOT / p).read_text(encoding="utf-8") for p in ("SKILL.md", "README.md", "agents/openai.yaml"))
     require("gpt6-prompt-writer" not in primary, "Old repository/skill name remains in primary docs")
     require("--repo chrisjian/multi-model-prompt-writer" in primary, "README installer repo drift")
+    require("models/volcengine" not in primary and "api/volcengine" not in primary, "Old Volcengine vendor path remains in primary docs")
 
     print(f"PASS: Core/Model/API separation, explicit invocation, {len(MODEL_PROFILES)} model profiles, {len(API_REFS)} cold API refs, and {count} preserved eval cases.")
     print("Harness references remain intentionally deferred; static checks only, no model/API execution or performance claim.")
