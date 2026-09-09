@@ -2,8 +2,6 @@
 
 Status: official-source verified 2026-09-09
 
-**Cold-load rule:** only load for Gemini API/SDK configuration, thinking controls, sampling parameters, thought signatures, tool protocol, model limits or migration code. Ordinary prompt work should load only the Gemini model Profile.
-
 ## Official sources
 
 - https://ai.google.dev/gemini-api/docs/gemini-3
@@ -28,7 +26,7 @@ Status: official-source verified 2026-09-09
 
 ## Migration boundary
 
-- The prompt-level recommendation to remove old chain-of-thought forcing belongs in `references/models/google/gemini-3.x.md`.
+- The prompt-level recommendation to remove old chain-of-thought forcing belongs in Core unless a model-specific delta is still needed.
 - `thinking_level`, temperature and thought-signature management belong here.
 
 ## Prompt boundary
