@@ -1,6 +1,6 @@
 # Prompt Engineering Core
 
-本文件只记录跨模型通用的工程原则。模型专属倾向、API 字段和迁移要求必须放在 `references/models/` 下的对应 Profile。
+本文件只记录跨模型通用的工程原则。模型专属内容只在确实会改变自然语言 Prompt 写法时由对应 Model Profile 追加；API 参数和宿主机制不进入 Core。
 
 ## 1. 最小任务契约
 
@@ -83,27 +83,18 @@
 
 不默认 few-shot。示例应解决真实歧义，不重复已经清楚的规则。
 
-## 11. 事实、行为、模型与宿主分层
+## 11. 事实、Prompt、模型与宿主分层
 
 - 来源支撑事实。
-- Prompt 定义行为。
-- Model Profile 描述特定模型当前官方指南、已知倾向与 API 事实。
-- Runtime / host 决定工具、权限、状态、异步、缓存、子代理等是否真实存在。
+- Prompt 定义模型可见行为。
+- Model Profile 只追加会实质改变自然语言 Prompt 写法的模型差异。
+- API 决定程序化参数、协议和状态。
+- Runtime / host 决定工具、权限、异步、缓存、子代理等是否真实存在。
 
 提示词文字不能把不存在的能力变成存在。
 
-## 12. 模型特例不可泛化
+## 12. Model Profile 是 delta，不是支持清单
 
-每个 Model Profile 都必须包含 `Do not generalize`。任何厂商专属默认 effort、格式倾向、验证倾向、搜索行为或 API 字段，都不能自动传播到其他模型或通用 Core。
+默认使用 Core。只有目标模型存在可复用、会改变 Prompt 写法的差异时才加载 Model Profile。
 
-## 来源与证据边界
-
-这些原则是本项目的工程归纳，不宣称是某一家厂商统一规定。当前依据包括：
-
-- OpenAI GPT‑6 Astra model guidance: https://developers.openai.com/api/docs/guides/latest-model
-- Anthropic Claude prompting best practices: https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices
-- Anthropic Claude Fable 5: https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5
-- Anthropic Claude Fable 5.1: https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5-1
-- xAI Grok 4.6 model/API docs: https://docs.x.ai/developers/grok-4-6
-
-厂商页面中的模型特有行为只进入对应 Profile；只有可合理泛化、且不依赖专属参数或已测倾向的工程原则才进入 Core。
+产品定位、能力矩阵、API 参数、宿主机制、其他模型的特例以及“没有证据”的说明都不构成 Prompt delta；没有有效 delta 的模型直接使用 Core。
