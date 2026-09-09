@@ -2,8 +2,6 @@
 
 Status: official-source verified 2026-09-09
 
-**Cold-load rule:** only load for GLM API/SDK configuration, version-specific context/output limits, thinking parameters, tool-loop state, structured output or migration. Ordinary prompt work should use the GLM model Profile only.
-
 ## Official sources
 
 - https://docs.bigmodel.cn/cn/guide/models/text/glm-5
@@ -35,4 +33,4 @@ Function Calling, structured output and context caching are version/interface ca
 
 ## Prompt boundary
 
-The model Profile may retain prompt-relevant guidance such as clear instructions and not forcing visible private reasoning. Context limits, thinking switches, effort mappings, reasoning state and API feature fields belong here.
+GLM 5.x uses the model-neutral Core for natural-language Prompt design. Context limits, thinking switches, effort mappings, reasoning state and API feature fields belong here.
