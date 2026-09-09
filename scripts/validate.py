@@ -149,10 +149,12 @@ def validate() -> int:
     require(fmt.get("type") == "json_schema" and fmt.get("strict") is True, "GPT-6 extraction example must use strict Structured Outputs")
     check_strict_objects(fmt["schema"])
 
-    joined = "\n".join((ROOT / p).read_text(encoding="utf-8") for p in ("SKILL.md", "README.md", "agents/openai.yaml"))
-    require("$gpt6-prompt-writer" not in joined, "Old skill invocation remains in primary docs")
+    primary = "\n".join((ROOT / p).read_text(encoding="utf-8") for p in ("SKILL.md", "README.md", "agents/openai.yaml"))
+    require("gpt6-prompt-writer" not in primary, "Old repository/skill name remains in primary docs")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    require("--repo chrisjian/multi-model-prompt-writer" in readme, "README installer repo drift")
 
-    print(f"PASS: multi-model architecture, explicit invocation, 4 model profiles, {count} eval cases, and GPT-6 API example contracts.")
+    print(f"PASS: multi-model architecture, explicit invocation, 4 model profiles, {count} eval cases, current repository name, and GPT-6 API example contracts.")
     print("Static checks only; no model/API execution or performance claim.")
     return 0
 

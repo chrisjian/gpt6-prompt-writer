@@ -9,7 +9,7 @@
 - Claude Fable 5.1
 - Grok 4.6
 
-仓库名暂时仍为 `gpt6-prompt-writer`，但 Skill 本身已重构为 `multi-model-prompt-writer`。后续如需，可再单独重命名 GitHub 仓库；不影响当前分支内容。
+仓库名与 Skill 名现已统一为 `multi-model-prompt-writer`。
 
 ## 设计目标
 
@@ -164,11 +164,11 @@ python3 scripts/validate.py
 
 ## 安装当前开发分支
 
-当前多模型重构位于 fork 的 `prompt-quality-v1.1`：
+当前多模型开发分支为 `prompt-quality-v1.1`：
 
 ```bash
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-installer/scripts/install-skill-from-github.py" \
-  --repo chrisjian/gpt6-prompt-writer \
+  --repo chrisjian/multi-model-prompt-writer \
   --ref prompt-quality-v1.1 \
   --path . \
   --name multi-model-prompt-writer
