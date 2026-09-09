@@ -69,10 +69,6 @@ LEGACY_PATHS = (
     "evals/models/claude-fable-5.json",
     "evals/models/claude-fable-5.1.json",
     "evals/models/grok-4.6.json",
-    "references/models/volcengine",
-    "references/api/volcengine.md",
-    "evals/models/volcengine",
-    "evals/api/volcengine.json",
 )
 
 
@@ -198,7 +194,6 @@ def validate() -> int:
     primary = "\n".join((ROOT / p).read_text(encoding="utf-8") for p in ("SKILL.md", "README.md", "agents/openai.yaml"))
     require("gpt6-prompt-writer" not in primary, "Old repository/skill name remains in primary docs")
     require("--repo chrisjian/multi-model-prompt-writer" in primary, "README installer repo drift")
-    require("models/volcengine" not in primary and "api/volcengine" not in primary, "Old Volcengine vendor path remains in primary docs")
 
     print(f"PASS: Core/Model/API separation, explicit invocation, {len(MODEL_PROFILES)} model profiles, {len(API_REFS)} cold API refs, and {count} preserved eval cases.")
     print("Harness references remain intentionally deferred; static checks only, no model/API execution or performance claim.")
