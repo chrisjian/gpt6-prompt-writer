@@ -57,15 +57,19 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-installer/scripts/inst
 依据 [官方 GPT‑6 Astra 指南](https://developers.openai.com/api/docs/guides/latest-model)，按任务需要加入这些控制：
 
 - **可验收结果**：把“专业、深入、高质量”等抽象要求转成可观察的产物特征和完成标准。
-- **Prompt 审计**：删除语义重复、无目的流程、旧模型 workaround 与无可观察效果的强化词。
-- **自主完成**：定义实际交付物、常规假设与真正需要澄清的条件。
+- **Prompt 审计**：删除语义重复、无目的流程、旧模型 workaround 与无可观察效果的强化词；多个症状能由同一原则控制时合并为根因级指令。
+- **目的上下文**：只有任务用途会改变重点、取舍、风险判断或输出结构时才写入，不为背景完整堆无关信息。
+- **自主完成**：先区分分析、建议和执行；明确行动意图在已授权范围内推进，不把问题描述扩成未授权修改。
+- **状态真实性**：计划、推断和意图不升级成“已搜索/已验证/已完成”；状态有实际支持，证据默认按需披露。
 - **指令冲突**：区分用户目标、技能建议和平台系统/开发者约束。
-- **写作风格**：写清读者、篇幅与表达形式，把“专业/去 AI 味”等模糊风格词转成具体写作行为。
+- **写作风格**：写清读者、篇幅与表达形式，把“专业/去 AI 味”等模糊风格词转成具体写作行为；简洁靠信息选择，不靠电报体。
 - **协作分工**：仅在宿主提供并允许子代理时，描述独立分工和整合责任。
 - **适量验证**：完成项目必需检查和相关行为验证，以新问题决定是否扩大测试。
 - **行为保真压缩**：优先减少 instruction surface area，保留目标、权限、事实边界、格式和失败处理等不变量。
 
 API 配置与自然语言提示词分开处理；模型与参数事实见 [API 契约](references/api-contract.md)。模板和选择规则属于本项目的实现，不代表 OpenAI 的统一规定。
+
+部分通用提示词工程原则也参考其他前沿模型的官方指南，用于补充 Prompt Audit、任务用途、状态真实性、可读性和示例策略；这些内容记录在 [跨模型提示词工程参考](references/cross-model-notes.md)，明确标为本项目工程选择，不作为 GPT‑6 官方规则，也不迁移其他模型的格式偏好、effort 默认值或专属运行时行为。
 
 ## 文件结构
 
@@ -74,13 +78,15 @@ gpt6-prompt-writer/
 ├── SKILL.md                       # 触发条件、工作流程与输出约定
 ├── agents/openai.yaml             # Codex 显示名称与默认提示
 ├── references/
-│   ├── gpt6-best-practices.md      # 官方依据及规则映射
+│   ├── gpt6-best-practices.md     # 官方依据及规则映射
 │   ├── prompt-patterns.md         # 按需选用的提示词模块
+│   ├── cross-model-notes.md       # 跨模型通用工程原则与不迁移项
 │   └── api-contract.md            # API 角色、参数和 schema 边界
 ├── examples/
 │   ├── worked-examples.md         # 完整写作示例
 │   ├── extraction-request.json    # 合法 JSON 请求体示例
-│   └── retest-prompts.json        # 18 个待执行回归场景
+│   ├── retest-prompts.json        # 18 个 GPT-6 核心待执行回归场景
+│   └── retest-cross-model-prompts.json # 6 个跨模型工程原则待执行回归场景
 ├── scripts/validate.py            # 无第三方依赖的静态校验
 └── LICENSE
 ```
@@ -93,17 +99,17 @@ gpt6-prompt-writer/
 python3 scripts/validate.py
 ```
 
-脚本检查 Skill 元数据、必需文件、相对引用、JSON 语法、回归用例格式，以及示例请求的模型/字段/schema 约束。GitHub Actions 执行同一命令。它不联网、不调用模型，也不是完整 JSON Schema 验证器或安全扫描器。
+脚本检查 Skill 元数据、显式调用策略、必需文件、相对引用、JSON 语法、两组回归用例格式，以及示例请求的模型/字段/schema 约束。GitHub Actions 执行同一命令。它不联网、不调用模型，也不是完整 JSON Schema 验证器或安全扫描器。
 
-当前为初版试用：结构检查通过；六个场景做过同一上下文的人工推演（E2 / dry-run）；尚无独立模型回放、真实 API 兼容性实测或成功率数据。18 个回归场景是测试输入与通过条件，不能当作 18 次测试通过记录。
+当前为初版试用：结构检查通过；六个场景做过同一上下文的人工推演（E2 / dry-run）；尚无独立模型回放、真实 API 兼容性实测或成功率数据。当前共有 **24 个待执行回归场景（18 个 GPT‑6 核心 + 6 个跨模型工程原则）**，不能当作 24 次测试通过记录。
 
 修改提示词行为后，选择相关正常、缺信息、冲突输入做真实回放，记录版本、实际输出与失败条件。请勿将私密原始对话或凭据提交为测试材料。
 
 ## 依据与维护
 
-官方资料核验日期为 **2026-09-07**，目标为 **GPT‑6 Astra / `gpt-6-astra`**。动态指南将来可能指向新模型；用户明确指定 GPT‑6 时应继续核对它的专属资料，不自动换代。
+OpenAI 官方资料核验日期为 **2026-09-07**，目标为 **GPT‑6 Astra / `gpt-6-astra`**。动态指南将来可能指向新模型；用户明确指定 GPT‑6 时应继续核对它的专属资料，不自动换代。
 
-出处与证据边界见 [来源记录](references/gpt6-best-practices.md)。离线时可使用注明日期的快照；要求“最新”或可运行 API 配置时应重新查阅官方资料。
+GPT‑6 出处与证据边界见 [来源记录](references/gpt6-best-practices.md)。跨模型工程参考于 **2026-09-09** 核验 Anthropic 的 [Fable 5.1 提示词指南](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5-1) 与 [Fable 5 提示词指南](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5)，只吸收可泛化的工程原则；模型特有行为不自动迁移。离线时可使用注明日期的快照；要求“最新”或可运行 API 配置时应重新查阅官方资料。
 
 本项目为社区 Skill。执行外部操作、工具权限和模型调用均由使用它的宿主负责；文本提示词不会自行开启工具或获得新权限。
 

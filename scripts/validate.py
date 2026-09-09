@@ -13,8 +13,9 @@ ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_FILES = (
     "SKILL.md", "README.md", "LICENSE", "agents/openai.yaml",
     "references/gpt6-best-practices.md", "references/prompt-patterns.md",
-    "references/api-contract.md", "examples/worked-examples.md",
-    "examples/extraction-request.json", "examples/retest-prompts.json",
+    "references/cross-model-notes.md", "references/api-contract.md",
+    "examples/worked-examples.md", "examples/extraction-request.json",
+    "examples/retest-prompts.json", "examples/retest-cross-model-prompts.json",
 )
 
 
@@ -42,6 +43,25 @@ def check_objects(node) -> None:
     elif isinstance(node, list):
         for value in node:
             check_objects(value)
+
+
+def check_fixture(path: Path, seen_ids: set[str]) -> int:
+    fixtures = read_json(path)
+    require(fixtures["target_model"] == "gpt-6-astra", f"Unexpected fixture target model: {path.name}")
+    cases = fixtures["cases"]
+    require(bool(cases), f"No regression inputs: {path.name}")
+    ids = [case["id"] for case in cases]
+    require(len(ids) == len(set(ids)), f"Duplicate regression case IDs within {path.name}")
+    require(not seen_ids.intersection(ids), f"Duplicate regression case IDs across fixture files: {path.name}")
+    seen_ids.update(ids)
+    for case in cases:
+        require(isinstance(case["prompt"], str) and bool(case["prompt"].strip()),
+                f"Missing prompt: {case['id']}")
+        for key in ("must", "must_not"):
+            require(isinstance(case[key], list) and bool(case[key])
+                    and all(isinstance(item, str) and bool(item.strip()) for item in case[key]),
+                    f"Missing criteria {key}: {case['id']}")
+    return len(cases)
 
 
 def validate() -> int:
@@ -89,19 +109,10 @@ def validate() -> int:
         name = ref.relative_to(ROOT).as_posix()
         require(f"`{name}`" in body, f"Reference missing from resource guide: {name}")
 
-    fixtures = read_json(ROOT / "examples/retest-prompts.json")
-    require(fixtures["target_model"] == "gpt-6-astra", "Unexpected fixture target model")
-    cases = fixtures["cases"]
-    require(bool(cases), "No regression inputs")
-    ids = [case["id"] for case in cases]
-    require(len(ids) == len(set(ids)), "Duplicate regression case IDs")
-    for case in cases:
-        require(isinstance(case["prompt"], str) and bool(case["prompt"].strip()),
-                f"Missing prompt: {case['id']}")
-        for key in ("must", "must_not"):
-            require(isinstance(case[key], list) and bool(case[key])
-                    and all(isinstance(item, str) and bool(item.strip()) for item in case[key]),
-                    f"Missing criteria {key}: {case['id']}")
+    seen_ids: set[str] = set()
+    case_count = 0
+    for fixture_name in ("retest-prompts.json", "retest-cross-model-prompts.json"):
+        case_count += check_fixture(ROOT / "examples" / fixture_name, seen_ids)
 
     request = read_json(ROOT / "examples/extraction-request.json")
     require(request["model"] == "gpt-6-astra", "Unexpected example model")
@@ -128,7 +139,7 @@ def validate() -> int:
         require(sample["missing_fields"] == missing, "Incorrect example missing_fields")
         require(sample["status"] == ("missing" if missing else "ok"), "Incorrect example status")
 
-    print(f"PASS: metadata, explicit-invocation policy, files, links, JSON, {len(cases)} regression inputs, and example request contracts.")
+    print(f"PASS: metadata, explicit-invocation policy, files, links, JSON, {case_count} regression inputs, and example request contracts.")
     print("Static checks only; no model/API execution or performance claim.")
     return 0
 
