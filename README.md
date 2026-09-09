@@ -107,11 +107,11 @@ $multi-model-prompt-writer 给 DeepSeek V4 Pro 写 thinking + tools 的 API 接�
 └── scripts/validate.py
 ```
 
-`evals/models/` 中可以保留针对具体模型名称的既有兼容性 regression，即使该模型当前已经 Core-only；eval 不等同于必须存在 Model Profile。
-
 ## Evals 与静态校验
 
-现有 regression case 保持不变；仓库重构本身不是新增定向测试的理由。只有真实用户要求、观察到的失败或有意义的模型差异才值得新增 eval。
+Evals 验证用户可观察行为和确有价值的模型/API 差异，不用于证明仓库结构或要求每个 Profile 都有测试。删除已被 Core 覆盖、已失去 model-specific 意义或只绑定实现路径的 case；不维护固定 case 数量。
+
+只有真实用户要求、观察到的失败或有意义的模型差异才值得新增 eval。
 
 ```bash
 python3 scripts/validate.py
