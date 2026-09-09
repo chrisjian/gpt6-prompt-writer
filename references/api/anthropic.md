@@ -2,8 +2,6 @@
 
 Status: official-source verified 2026-09-09
 
-**Cold-load rule:** only load this file for Anthropic API/SDK configuration, effort selection, thinking/history state, compaction or other programmatic integration questions. Ordinary prompt work should use the Fable model Profiles without this file.
-
 ## Official sources
 
 - https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5
@@ -15,7 +13,7 @@ Status: official-source verified 2026-09-09
 - Anthropic describes effort as the main intelligence/latency/cost control for Fable 5-family workloads.
 - For Fable 5, current guidance uses `high` as a default starting point for many tasks, with higher/lower levels evaluated against the workload rather than assumed better.
 - For Fable 5.1, re-evaluate all effort levels on the target task; same-named effort levels do not imply the same amount of thinking across model generations.
-- Effort selection is configuration. Its prompt implication—such as constraining scope when high effort over-deliberates—belongs in the model Profile.
+- At low effort, Fable 5.1 may call search/retrieval tools less often. For current-fact workflows already configured at low effort, an explicit search trigger can be useful when the harness actually provides such a tool.
 
 ## Thinking and conversation state
 
